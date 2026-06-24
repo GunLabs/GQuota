@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>私有仓库开源发布操作手册</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f6f7f9;
+      --fg: #17191d;
+      --muted: #606b78;
+      --panel: #ffffff;
+      --border: #d8dee8;
+      --code-bg: #101419;
+      --code-fg: #eef4ff;
+      --accent: #0969da;
+      --warn-bg: #fff8e6;
+      --warn-border: #d8a828;
+      --ok-bg: #edf9f1;
+      --ok-border: #65b878;
+      --danger-bg: #fff0f0;
+      --danger-border: #d66b6b;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #101214;
+        --fg: #eef1f5;
+        --muted: #aab3bf;
+        --panel: #171b20;
+        --border: #303842;
+        --code-bg: #05070a;
+        --code-fg: #eff6ff;
+        --accent: #79b8ff;
+        --warn-bg: #2b2414;
+        --warn-border: #a87f24;
+        --ok-bg: #14281a;
+        --ok-border: #438554;
+        --danger-bg: #2d1717;
+        --danger-border: #9c4545;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+
+    main {
+      width: min(1100px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 40px 0 72px;
+    }
+
+    header {
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 34px;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 34px 0 12px;
+      font-size: 23px;
+      line-height: 1.3;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 24px 0 8px;
+      font-size: 17px;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    a {
+      color: var(--accent);
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.94em;
+    }
+
+    pre {
+      overflow-x: auto;
+      margin: 12px 0 18px;
+      padding: 14px 16px;
+      border-radius: 8px;
+      background: var(--code-bg);
+      color: var(--code-fg);
+      line-height: 1.45;
+    }
+
+    pre code {
+      color: inherit;
+      font-size: 13px;
+    }
+
+    ul,
+    ol {
+      margin: 8px 0 16px 24px;
+      padding: 0;
+    }
+
+    li {
+      margin: 5px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 18px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+    }
+
+    th,
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      font-weight: 650;
+    }
+
+    .panel {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 16px 18px;
+      margin: 14px 0;
+    }
+
+    .warning {
+      border-color: var(--warn-border);
+      background: var(--warn-bg);
+    }
+
+    .danger {
+      border-color: var(--danger-border);
+      background: var(--danger-bg);
+    }
+
+    .success {
+      border-color: var(--ok-border);
+      background: var(--ok-bg);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .toc {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      padding: 0;
+      list-style: none;
+    }
+
+    .toc a {
+      display: block;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 10px 12px;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>私有仓库开源发布操作手册</h1>
+      <p class="muted">从 private repository 走到 public repository 的完整流程：文档、License、secret scan、历史清理、GitHub 设置、远端复核。</p>
+    </header>
+
+    <section class="panel warning">
+      <h2>给下次 AI 的操作摘要</h2>
+      <p>目标：把一个私有 GitHub 仓库整理成可以公开的仓库。流程必须先清理当前树和历史，再公开。不要先点 public 再补救。</p>
+      <p>必须检查：当前源码 secret、git history secret、私人邮箱、本机路径、真实 fixture、构建产物、IDE 用户状态、<code>.env</code>、License、README 定位、贡献边界、Security policy、GitHub branch protection、secret scanning。</p>
+      <p>公开后必须重新 clone 远端验证。只看本地扫描不够。</p>
+    </section>
+
+    <nav aria-label="目录">
+      <ul class="toc">
+        <li><a href="#scope">适用范围</a></li>
+        <li><a href="#plan">总流程</a></li>
+        <li><a href="#docs">开源文档准备</a></li>
+        <li><a href="#security">安全检查</a></li>
+        <li><a href="#history">历史清理</a></li>
+        <li><a href="#squash">初始提交 squash</a></li>
+        <li><a href="#github">GitHub 设置</a></li>
+        <li><a href="#verify">验证清单</a></li>
+        <li><a href="#cleanup">收尾清理</a></li>
+        <li><a href="#prompt">给 AI 的复用提示词</a></li>
+      </ul>
+    </nav>
+
+    <section id="scope">
+      <h2>适用范围</h2>
+      <p>适用于个人或小团队把一个原本私有开发的仓库公开。典型场景：开发过程中有临时 commit、私人邮箱、本机路径、真实接口样本、旧 secret、草稿文档，公开前需要整理成可读、可维护、无明显泄漏的状态。</p>
+      <p>不适用于已经有外部用户依赖 commit hash、已有大量公开 fork、或必须保留完整审计历史的仓库。那种项目不应随意重写历史。</p>
+    </section>
+
+    <section id="plan">
+      <h2>总流程</h2>
+      <ol>
+        <li>确认仓库状态：当前分支、远端、默认分支、GitHub 可见性。</li>
+        <li>补齐开源文档：README、LICENSE、CONTRIBUTING、SECURITY、TODO/roadmap。</li>
+        <li>清理当前源码树：secret、私人路径、真实样本、生成产物、IDE 用户状态。</li>
+        <li>扫描 git history：secret、私人邮箱、本机路径、真实凭据。</li>
+        <li>必要时重写历史：替换 secret、mailmap 邮箱、移除本机路径。</li>
+        <li>可选：公开前 squash 成一个 <code>Initial public release</code> root commit。</li>
+        <li>跑测试、构建、gitleaks、旧值搜索。</li>
+        <li>推送到远端。历史改写时必须使用 <code>--force-with-lease</code>。</li>
+        <li>配置 GitHub：描述、topics、secret scanning、push protection、vulnerability reporting、branch protection。</li>
+        <li>切换 public。</li>
+        <li>重新 clone 公开远端并复核。</li>
+      </ol>
+    </section>
+
+    <section id="docs">
+      <h2>开源文档准备</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>文件</th>
+            <th>必须说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>README.md</code></td>
+            <td>项目是什么、非官方声明、构建方式、隐私边界、风险、测试命令、License 链接。</td>
+          </tr>
+          <tr>
+            <td><code>LICENSE</code></td>
+            <td>明确许可证。常见个人开源项目可用 MIT，但要确认你确实想允许商业使用、修改、再分发。</td>
+          </tr>
+          <tr>
+            <td><code>CONTRIBUTING.md</code></td>
+            <td>接受什么贡献，不接受什么贡献，测试要求，fixture 脱敏规则，贡献默认 License。</td>
+          </tr>
+          <tr>
+            <td><code>SECURITY.md</code></td>
+            <td>如何报告安全问题，不要在 public issue 粘贴真实凭据，项目关注哪些安全范围。</td>
+          </tr>
+          <tr>
+            <td><code>TODO</code> / roadmap</td>
+            <td>移除历史状态噪音，只保留真实开放项、外部依赖项、发布前阻塞项。</td>
+          </tr>
+          <tr>
+            <td><code>.gitignore</code></td>
+            <td>忽略 <code>.env</code>、构建目录、IDE 用户状态、系统文件和本地 agent 配置。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>README 风险声明模板</h3>
+      <pre><code>This is an unofficial, local-first tool. It is not affiliated with the providers it queries.
+It reads local credentials only to query the current user's own account data.
+It does not upload tokens or quota responses to a project backend.
+Provider endpoints, schemas, auth behavior, and terms may change at any time.</code></pre>
+    </section>
+
+    <section id="security">
+      <h2>安全检查</h2>
+      <div class="panel danger">
+        <p><strong>顺序很重要：</strong>先扫描和清理，再公开。公开后再发现 secret，处理成本会高很多。</p>
+      </div>
+
+      <h3>当前工作树扫描</h3>
+      <pre><code>rg -n --hidden --glob '!.git/**' --glob '!**/.build/**' \
+  '(AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9_]{20,}|github_pat_|xox[baprs]-|GOCSPX-|AIza[0-9A-Za-z_-]{20,})' .
+
+rg -n --hidden --glob '!.git/**' --glob '!**/.build/**' \
+  '(PRIVATE_EMAIL|OLD_LOCAL_PATH|/Users/LOCAL_USER|real-account-id|real-project-id)' .</code></pre>
+
+      <h3>gitleaks 扫描</h3>
+      <pre><code>gitleaks dir . --redact --no-banner
+gitleaks detect --source . --redact --no-banner</code></pre>
+
+      <h3>Git history 搜索</h3>
+      <pre><code>git log --all --format='%an &lt;%ae&gt;' | sort -u
+git grep -n -I -e 'OLD_SECRET_PATTERN' -e 'PRIVATE_EMAIL' -e 'OLD_LOCAL_PATH' $(git rev-list --all)</code></pre>
+
+      <h3>需要人工判断的命中</h3>
+      <ul>
+        <li>真实 API key、OAuth client secret、GitHub token、cloud key：按泄漏处理，轮换或废弃。</li>
+        <li>真实邮箱、账号 ID、project ID：能替换就替换，fixture 用 <code>user@example.com</code>、<code>acct-FAKE123</code>、<code>proj-FAKE123</code>。</li>
+        <li>本机路径：替换为 <code>仓库根目录</code> 或 <code>REDACTED_LOCAL_PATH</code>。</li>
+        <li>测试 fixture：保留结构，不保留身份和凭据字段。</li>
+      </ul>
+    </section>
+
+    <section id="history">
+      <h2>历史清理</h2>
+      <p>如果当前树已经干净，但 <code>gitleaks detect</code> 或 <code>git grep $(git rev-list --all)</code> 仍有命中，需要重写历史。</p>
+
+      <h3>创建替换表和 mailmap</h3>
+      <pre><code>cat &gt; /tmp/repo-filter-replace.txt &lt;&lt;'EOF'
+literal:OLD_SECRET_VALUE==&gt;REDACTED_SECRET
+literal:OLD_LOCAL_PATH==&gt;REDACTED_LOCAL_PATH
+literal:PRIVATE_EMAIL==&gt;PUBLIC_NOREPLY_EMAIL
+EOF
+
+cat &gt; /tmp/repo-mailmap.txt &lt;&lt;'EOF'
+PublicName &lt;PUBLIC_NOREPLY_EMAIL&gt; &lt;PRIVATE_EMAIL&gt;
+EOF</code></pre>
+
+      <h3>执行 git-filter-repo</h3>
+      <pre><code>git status --short --branch
+git filter-repo --force \
+  --replace-text /tmp/repo-filter-replace.txt \
+  --replace-message /tmp/repo-filter-replace.txt \
+  --mailmap /tmp/repo-mailmap.txt</code></pre>
+
+      <p><code>git-filter-repo</code> 可能会移除 <code>origin</code> remote。执行后要恢复 remote，并重新跑历史扫描。</p>
+      <pre><code>git remote add origin https://github.com/OWNER/REPO.git
+gitleaks detect --source . --redact --no-banner
+git log --all --format='%an &lt;%ae&gt;' | sort -u</code></pre>
+
+      <div class="panel warning">
+        <p>不要把包含旧 secret 的 bundle、patch、报告文件长期留在 <code>/tmp</code> 或仓库目录。验证完成后清理临时文件。</p>
+      </div>
+    </section>
+
+    <section id="squash">
+      <h2>公开前 squash 成一个初始提交</h2>
+      <p>这是可选步骤。它的作用是让公开仓库从一个干净的 <code>Initial public release</code> 提交开始。安全清理完成后再做。</p>
+
+      <h3>推荐方式：从干净 tree 生成 root commit</h3>
+      <pre><code>STAMP=$(date +%Y%m%d-%H%M%S)
+REMOTE_MAIN=$(git ls-remote origin refs/heads/main | awk '{print $1}')
+git branch "backup/pre-public-squash-$STAMP" "$REMOTE_MAIN"
+
+BACKUP_REF="backup/pre-public-squash-$STAMP"
+NEW_ROOT=$(printf 'Initial public release\n' | git commit-tree "$BACKUP_REF^{tree}")
+git update-ref refs/heads/main "$NEW_ROOT"
+git checkout -f main</code></pre>
+
+      <h3>验证 squash 结果</h3>
+      <pre><code>git rev-list --count main
+git diff --stat "$BACKUP_REF" HEAD --
+git ls-tree -r --name-only HEAD | rg '(^.*\.build/|xcuserdata|project\.xcworkspace|\.swiftpm)'</code></pre>
+
+      <div class="panel danger">
+        <p><strong>不要直接用：</strong><code>git switch --orphan</code> 后接 <code>git add -A</code>。orphan 分支会保留旧索引状态，容易把构建产物、IDE 用户状态、测试输出一起带进初始提交。</p>
+      </div>
+    </section>
+
+    <section id="github">
+      <h2>GitHub 设置</h2>
+      <h3>仓库描述和 topics</h3>
+      <pre><code>gh repo edit OWNER/REPO \
+  --description "Short project description."
+
+gh api --method PUT repos/OWNER/REPO/topics --input - &lt;&lt;'JSON'
+{"names":["topic-a","topic-b","topic-c"]}
+JSON</code></pre>
+
+      <h3>开启安全功能</h3>
+      <pre><code>gh repo edit OWNER/REPO \
+  --enable-secret-scanning \
+  --enable-secret-scanning-push-protection \
+  --delete-branch-on-merge \
+  --enable-issues
+
+gh api --method PUT repos/OWNER/REPO/private-vulnerability-reporting
+gh api --method PUT repos/OWNER/REPO/vulnerability-alerts
+gh api --method PUT repos/OWNER/REPO/automated-security-fixes</code></pre>
+
+      <h3>设置 main 分支保护</h3>
+      <pre><code>gh api --method PUT repos/OWNER/REPO/branches/main/protection --input - &lt;&lt;'JSON'
+{
+  "required_status_checks": null,
+  "enforce_admins": false,
+  "required_pull_request_reviews": null,
+  "restrictions": null,
+  "allow_force_pushes": false,
+  "allow_deletions": false,
+  "required_conversation_resolution": true
+}
+JSON</code></pre>
+
+      <h3>切换 public</h3>
+      <pre><code>gh repo edit OWNER/REPO \
+  --visibility public \
+  --accept-visibility-change-consequences</code></pre>
+
+      <p>如果还需要 force push 更新重写后的历史，先临时把 <code>allow_force_pushes</code> 设为 <code>true</code>，推送后立刻改回 <code>false</code>。</p>
+    </section>
+
+    <section id="verify">
+      <h2>最终验证清单</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>检查项</th>
+            <th>命令</th>
+            <th>期望结果</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>本地工作区</td>
+            <td><code>git status --short --branch</code></td>
+            <td>干净，分支跟踪 <code>origin/main</code></td>
+          </tr>
+          <tr>
+            <td>提交数量</td>
+            <td><code>git rev-list --count main</code></td>
+            <td>如果做了 squash，输出 <code>1</code></td>
+          </tr>
+          <tr>
+            <td>历史 secret scan</td>
+            <td><code>gitleaks detect --source . --redact --no-banner</code></td>
+            <td><code>no leaks found</code></td>
+          </tr>
+          <tr>
+            <td>当前树 secret scan</td>
+            <td><code>gitleaks dir . --redact --no-banner</code></td>
+            <td><code>no leaks found</code></td>
+          </tr>
+          <tr>
+            <td>旧值搜索</td>
+            <td><code>git grep -n -I -e 'OLD_SECRET_PATTERN' -e 'PRIVATE_EMAIL' -e 'OLD_LOCAL_PATH' $(git rev-list --all)</code></td>
+            <td>无输出</td>
+          </tr>
+          <tr>
+            <td>远端独立验证</td>
+            <td><code>git clone https://github.com/OWNER/REPO.git /tmp/repo-verify</code></td>
+            <td>在 clone 副本中重复提交数、gitleaks、旧值搜索</td>
+          </tr>
+          <tr>
+            <td>生成产物</td>
+            <td><code>git ls-tree -r --name-only HEAD | rg '(^.*\.build/|xcuserdata|project\.xcworkspace|\.swiftpm)'</code></td>
+            <td>无输出</td>
+          </tr>
+          <tr>
+            <td>GitHub 安全设置</td>
+            <td><code>gh api repos/OWNER/REPO --jq '{visibility, security_and_analysis}'</code></td>
+            <td>public，secret scanning / push protection / Dependabot security updates 开启</td>
+          </tr>
+          <tr>
+            <td>Branch protection</td>
+            <td><code>gh api repos/OWNER/REPO/branches/main/protection --jq '{allow_force_pushes, allow_deletions}'</code></td>
+            <td>force push 和 deletion 都是 disabled</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="cleanup">
+      <h2>收尾清理</h2>
+      <ul>
+        <li>删除临时扫描报告、替换表、mailmap、clone 目录。</li>
+        <li>删除本地备份分支，除非你明确需要短期保留。</li>
+        <li>确认 <code>/tmp/repo*</code>、<code>/tmp/*gitleaks*</code> 没有残留敏感文件。</li>
+        <li>确认本地 Git author 使用 public noreply email。</li>
+      </ul>
+      <pre><code>git config user.name
+git config user.email
+git branch --list 'backup/*'
+ls /tmp | rg 'repo|gitleaks|filter|mailmap'</code></pre>
+    </section>
+
+    <section id="prompt">
+      <h2>给 AI 的复用提示词</h2>
+      <pre><code>请阅读 docs/open-source-release-guide.html，并按这份手册把当前私有仓库准备成公开仓库。
+要求：
+1. 先确认仓库状态、远端 main hash、GitHub 可见性和分支保护。
+2. 补齐 README、LICENSE、CONTRIBUTING、SECURITY、TODO/roadmap 和 .gitignore。
+3. 扫描当前树和 git history 的 secret、私人邮箱、本机路径、真实 fixture。
+4. 如果历史有泄漏，用 git-filter-repo 清理，并重新验证。
+5. 如需 squash，只能从已验证干净的 tree 用 git commit-tree 生成 root commit，不要 orphan + git add -A。
+6. 所有历史重写推送必须使用 --force-with-lease。
+7. 公开前后都要跑测试、gitleaks、旧值搜索。
+8. 公开后开启 GitHub secret scanning、push protection、Dependabot security updates、private vulnerability reporting 和 branch protection。
+9. 最后重新 clone 远端仓库验证，并清理所有临时文件。</code></pre>
+    </section>
+  </main>
+</body>
+</html>
