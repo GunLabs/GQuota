@@ -1,0 +1,69 @@
+{
+  "account_id": "acct-FAKE123",
+  "additional_rate_limits": [
+    {
+      "limit_name": "GPT-5.3-Codex-Spark",
+      "metered_feature": "codex_bengalfox",
+      "rate_limit": {
+        "allowed": true,
+        "limit_reached": false,
+        "primary_window": {
+          "limit_window_seconds": 18000,
+          "reset_after_seconds": 18000,
+          "reset_at": 1781212050,
+          "used_percent": 0
+        },
+        "secondary_window": {
+          "limit_window_seconds": 604800,
+          "reset_after_seconds": 36097,
+          "reset_at": 1781230146,
+          "used_percent": 9
+        }
+      }
+    }
+  ],
+  "code_review_rate_limit": null,
+  "credits": {
+    "approx_cloud_messages": [
+      0,
+      0
+    ],
+    "approx_local_messages": [
+      0,
+      0
+    ],
+    "balance": "0",
+    "has_credits": false,
+    "overage_limit_reached": false,
+    "unlimited": false
+  },
+  "email": "user@example.com",
+  "plan_type": "pro",
+  "promo": null,
+  "rate_limit": {
+    "allowed": true,
+    "limit_reached": false,
+    "primary_window": {
+      "limit_window_seconds": 18000,
+      "reset_after_seconds": 17315,
+      "reset_at": 1781211364,
+      "used_percent": 1
+    },
+    "secondary_window": {
+      "limit_window_seconds": 604800,
+      "reset_after_seconds": 564159,
+      "reset_at": 1781758208,
+      "used_percent": 4
+    }
+  },
+  "rate_limit_reached_type": null,
+  "rate_limit_reset_credits": {
+    "available_count": 0
+  },
+  "referral_beacon": null,
+  "spend_control": {
+    "individual_limit": null,
+    "reached": false
+  },
+  "user_id": "user-FAKE123"
+}

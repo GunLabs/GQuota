@@ -1,0 +1,24 @@
+{
+  "allowedTiers": [
+    {
+      "description": "Unlimited coding assistant with the most powerful Gemini models",
+      "id": "standard-tier",
+      "isDefault": true,
+      "name": "Gemini Code Assist",
+      "privacyNotice": {},
+      "userDefinedCloudaicompanionProject": true,
+      "usesGcpTos": true
+    }
+  ],
+  "cloudaicompanionProject": "proj-FAKE123",
+  "currentTier": {
+    "description": "Unlimited coding assistant with the most powerful Gemini models",
+    "id": "standard-tier",
+    "name": "Gemini Code Assist",
+    "privacyNotice": {},
+    "userDefinedCloudaicompanionProject": true,
+    "usesGcpTos": true
+  },
+  "gcpManaged": false,
+  "manageSubscriptionUri": ""
+}

@@ -1,0 +1,39 @@
+.superpowers/
+.worktrees/
+.DS_Store
+*.log
+*.swp
+*.swo
+*~
+
+# Local secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+
+# Editor / IDE
+.idea/
+.vscode/
+
+# Xcode / Swift
+build/
+DerivedData/
+*.xcresult
+*.xcuserstate
+*.xcuserdatad/
+*.xccheckout
+*.xcscmblueprint
+*.moved-aside
+xcuserdata/
+.swiftpm/
+.build/
+
+# Claude Code local
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+
+# Xcode auto-generated workspace (user state)
+GQuota.xcodeproj/project.xcworkspace/
+.gstack/

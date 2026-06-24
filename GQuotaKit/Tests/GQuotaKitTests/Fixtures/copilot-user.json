@@ -1,0 +1,23 @@
+{
+  "copilot_plan": "individual_pro",
+  "quota_reset_date": "2026-07-01T00:00:00Z",
+  "quota_snapshots": {
+    "premium_interactions": {
+      "percent_remaining": 42,
+      "entitlement": 300,
+      "remaining": 126
+    },
+    "chat": {
+      "percent_remaining": "90"
+    },
+    "completions": {
+      "percent_remaining": 100
+    }
+  },
+  "monthly_quotas": {
+    "legacy": 100
+  },
+  "limited_user_quotas": {
+    "legacy": 25
+  }
+}
